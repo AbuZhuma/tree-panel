@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tree Builder Panel</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="navbar-left">
+      <strong class="brand">🌳 Tree Builder</strong>
+      <label class="navbar-field">
+        Дерево:
+        <select id="tree-select"></select>
+      </label>
+      <button id="new-tree-btn" class="btn">+ Новое дерево</button>
+      <button id="delete-tree-btn" class="btn btn-danger" title="Удалить текущее дерево">Удалить</button>
+    </div>
+    <div class="navbar-right">
+      <span id="active-schema-label" class="muted"></span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Левая панель: схема полей -->
+    <aside class="panel panel-left">
+      <h2>Схема полей</h2>
+      <div id="schema-info" class="muted">Схема не выбрана</div>
+      <ul id="fields-list" class="fields-list"></ul>
+
+      <button id="add-field-btn" class="btn btn-block">+ Поле</button>
+
+      <!-- inline-форма добавления/редактирования поля -->
+      <form id="field-form" class="field-form hidden">
+        <input type="hidden" id="field-id" />
+        <label>Ключ (key)
+          <input type="text" id="field-key" placeholder="name" required />
+        </label>
+        <label>Тип
+          <select id="field-type">
+            <option value="text">text</option>
+            <option value="number">number</option>
+            <option value="date">date</option>
+            <option value="select">select</option>
+          </select>
+        </label>
+        <label id="field-options-wrap" class="hidden">Варианты (через запятую)
+          <input type="text" id="field-options" placeholder="вариант1, вариант2" />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+          <button type="button" id="field-cancel" class="btn">Отмена</button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- Центр: диаграмма -->
+    <section class="panel panel-center">
+      <div id="diagram" class="diagram"></div>
+    </section>
+
+    <!-- Правая панель: редактор узла -->
+    <aside class="panel panel-right">
+      <h2>Редактор узла</h2>
+      <div id="node-editor" class="node-editor">
+        <p class="muted">Выберите узел в диаграмме</p>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Модалка создания дерева -->
+  <div id="tree-modal" class="modal hidden">
+    <div class="modal-box">
+      <h3>Новое дерево</h3>
+      <form id="tree-form">
+        <label>Название дерева
+          <input type="text" id="tree-title" required />
+        </label>
+        <label>Схема
+          <select id="tree-schema-select"></select>
+        </label>
+        <div class="modal-or muted">— или создать новую схему —</div>
+        <label>Название новой схемы
+          <input type="text" id="new-schema-name" placeholder="оставьте пустым, чтобы использовать выбранную" />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Создать</button>
+          <button type="button" id="tree-modal-cancel" class="btn">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
