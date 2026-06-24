@@ -1,4 +1,3 @@
-// Простой раннер миграций: выполняет все .sql из server/migrations по порядку.
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');

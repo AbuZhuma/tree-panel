@@ -28,7 +28,6 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .hidden { display: none !important; }
 .muted { color: var(--muted); font-size: 13px; }
 
-/* Navbar */
 .navbar {
   display: flex;
   align-items: center;
@@ -39,11 +38,11 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
   gap: 12px;
 }
 .navbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.navbar-right { display: flex; align-items: center; gap: 10px; }
 .brand { font-size: 16px; }
 .navbar-field { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .navbar-field select { min-width: 180px; }
 
-/* Layout */
 .layout {
   flex: 1;
   display: grid;
@@ -60,7 +59,6 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .panel-center { background: var(--bg); padding: 0; }
 .panel h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 12px; }
 
-/* Buttons */
 .btn {
   cursor: pointer;
   border: 1px solid var(--border);
@@ -78,7 +76,6 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .btn-danger:hover { background: #fdeaea; }
 .btn-block { width: 100%; margin-top: 8px; }
 
-/* Fields list */
 .fields-list { list-style: none; padding: 0; margin: 0; }
 .field-item {
   border: 1px solid var(--border);
@@ -100,7 +97,6 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .icon-btn:hover { background: #eef1f4; color: var(--text); }
 .req-badge { color: var(--danger); font-size: 11px; }
 
-/* Field form */
 .field-form { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .field-form label, .node-editor label, .modal label {
   display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted);
@@ -113,7 +109,6 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .checkbox-row { flex-direction: row !important; align-items: center; gap: 6px; color: var(--text) !important; font-size: 13px !important; }
 .form-actions { display: flex; gap: 8px; margin-top: 4px; }
 
-/* Diagram */
 .diagram {
   width: 100%;
   height: 100%;
@@ -125,7 +120,6 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .diagram-inner { display: inline-block; }
 .empty-state { color: var(--muted); text-align: center; margin-top: 60px; }
 
-/* Tree node rendering (nested) */
 .tree-root-wrap { display: flex; gap: 40px; align-items: flex-start; }
 ul.tree, ul.tree ul {
   list-style: none;
@@ -139,7 +133,7 @@ ul.tree li {
   padding: 28px 12px 0;
   text-align: center;
 }
-/* connectors */
+
 ul.tree li::before, ul.tree li::after {
   content: "";
   position: absolute;
@@ -200,12 +194,10 @@ ul.tree ul { padding-top: 28px; display: flex; }
 }
 .node-box:hover .node-add-child { display: flex; }
 
-/* Node editor */
 .node-editor { display: flex; flex-direction: column; gap: 12px; }
 .node-editor .editor-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .node-editor .editor-actions .btn { width: 100%; }
 
-/* Modal */
 .modal {
   position: fixed; inset: 0;
   background: rgba(0,0,0,.4);
@@ -220,7 +212,6 @@ ul.tree ul { padding-top: 28px; display: flex; }
 .modal-box form { display: flex; flex-direction: column; gap: 10px; }
 .modal-or { text-align: center; font-size: 12px; }
 
-/* Toast */
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   background: var(--text); color: #fff; padding: 10px 18px; border-radius: 8px;

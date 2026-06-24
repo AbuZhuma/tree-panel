@@ -4,7 +4,6 @@ const db = require('../db');
 const router = express.Router();
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// POST /api/nodes — создать узел
 router.post('/nodes', wrap(async (req, res) => {
   const { tree_id, parent_id = null, data = {} } = req.body;
   if (!tree_id) return res.status(400).json({ error: 'Поле tree_id обязательно' });
@@ -14,7 +13,6 @@ router.post('/nodes', wrap(async (req, res) => {
     return res.status(400).json({ error: 'Дерево не найдено' });
   }
 
-  // Проверяем, что родитель принадлежит тому же дереву
   if (parent_id != null) {
     const parentCheck = await db.query(
       'SELECT id FROM nodes WHERE id = $1 AND tree_id = $2',
@@ -25,7 +23,6 @@ router.post('/nodes', wrap(async (req, res) => {
     }
   }
 
-  // позиция = в конец среди соседей
   const posRes = await db.query(
     `SELECT COALESCE(MAX(position), -1) + 1 AS next
      FROM nodes WHERE tree_id = $1 AND parent_id IS NOT DISTINCT FROM $2`,
@@ -40,7 +37,6 @@ router.post('/nodes', wrap(async (req, res) => {
   res.status(201).json(rows[0]);
 }));
 
-// PUT /api/nodes/:id — обновить данные узла
 router.put('/nodes/:id', wrap(async (req, res) => {
   const { data } = req.body;
   if (data === undefined || typeof data !== 'object' || data === null) {
@@ -54,7 +50,6 @@ router.put('/nodes/:id', wrap(async (req, res) => {
   res.json(rows[0]);
 }));
 
-// PUT /api/nodes/:id/move — сменить parent_id или position
 router.put('/nodes/:id/move', wrap(async (req, res) => {
   const id = req.params.id;
   const { parent_id, position } = req.body;
@@ -65,13 +60,11 @@ router.put('/nodes/:id/move', wrap(async (req, res) => {
 
   const newParent = parent_id !== undefined ? parent_id : node.parent_id;
 
-  // Нельзя сделать узел потомком самого себя
   if (newParent != null && String(newParent) === String(id)) {
     return res.status(400).json({ error: 'Узел не может быть родителем самого себя' });
   }
 
   if (newParent != null) {
-    // родитель должен быть в том же дереве
     const parentCheck = await db.query(
       'SELECT id FROM nodes WHERE id = $1 AND tree_id = $2',
       [newParent, node.tree_id]
@@ -80,7 +73,6 @@ router.put('/nodes/:id/move', wrap(async (req, res) => {
       return res.status(400).json({ error: 'Родительский узел не найден в этом дереве' });
     }
 
-    // защита от цикла: новый родитель не должен быть потомком узла
     const cycleCheck = await db.query(
       `WITH RECURSIVE descendants AS (
          SELECT id FROM nodes WHERE id = $1
@@ -104,7 +96,6 @@ router.put('/nodes/:id/move', wrap(async (req, res) => {
   res.json(rows[0]);
 }));
 
-// DELETE /api/nodes/:id — удалить узел (каскадно удаляет детей)
 router.delete('/nodes/:id', wrap(async (req, res) => {
   const { rowCount } = await db.query('DELETE FROM nodes WHERE id = $1', [req.params.id]);
   if (rowCount === 0) return res.status(404).json({ error: 'Узел не найден' });

@@ -4,7 +4,6 @@ const db = require('../db');
 const router = express.Router();
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// GET /api/trees — список деревьев
 router.get('/trees', wrap(async (req, res) => {
   const { rows } = await db.query(
     `SELECT t.*, s.name AS schema_name
@@ -15,7 +14,6 @@ router.get('/trees', wrap(async (req, res) => {
   res.json(rows);
 }));
 
-// POST /api/trees — создать дерево
 router.post('/trees', wrap(async (req, res) => {
   const { schema_id, title } = req.body;
   if (!schema_id) return res.status(400).json({ error: 'Поле schema_id обязательно' });
@@ -35,14 +33,12 @@ router.post('/trees', wrap(async (req, res) => {
   res.status(201).json(rows[0]);
 }));
 
-// DELETE /api/trees/:id — удалить дерево
 router.delete('/trees/:id', wrap(async (req, res) => {
   const { rowCount } = await db.query('DELETE FROM trees WHERE id = $1', [req.params.id]);
   if (rowCount === 0) return res.status(404).json({ error: 'Дерево не найдено' });
   res.json({ ok: true });
 }));
 
-// GET /api/trees/:id/nodes — все узлы дерева (плоский список)
 router.get('/trees/:id/nodes', wrap(async (req, res) => {
   const { rows } = await db.query(
     'SELECT * FROM nodes WHERE tree_id = $1 ORDER BY parent_id NULLS FIRST, position, id',

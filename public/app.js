@@ -1,17 +1,15 @@
 'use strict';
 
-// ---------- Состояние ----------
 const state = {
   schemas: [],
   activeSchemaId: null,
   trees: [],
   activeTreeId: null,
-  nodes: [],          // плоский список
+  nodes: [],
   selectedNodeId: null,
-  fields: [],         // schema_fields активной схемы
+  fields: [],
 };
 
-// ---------- API ----------
 async function api(method, path, body) {
   const opts = { method, headers: {} };
   if (body !== undefined) {
@@ -20,14 +18,13 @@ async function api(method, path, body) {
   }
   const res = await fetch('/api' + path, opts);
   let data = null;
-  try { data = await res.json(); } catch (_) { /* пусто */ }
+  try { data = await res.json(); } catch (_) {}
   if (!res.ok) {
     throw new Error((data && data.error) || `Ошибка ${res.status}`);
   }
   return data;
 }
 
-// ---------- Утилиты ----------
 const $ = (sel) => document.querySelector(sel);
 
 function toast(msg, isError = false) {
@@ -44,7 +41,6 @@ function handleError(err) {
   toast(err.message || 'Произошла ошибка', true);
 }
 
-// ---------- Загрузка данных ----------
 async function loadSchemas() {
   state.schemas = await api('GET', '/schemas');
 }
@@ -63,7 +59,6 @@ async function loadNodes() {
   state.nodes = await api('GET', `/trees/${state.activeTreeId}/nodes`);
 }
 
-// При выборе дерева подтягиваем его схему как активную
 function syncActiveSchemaFromTree() {
   const tree = state.trees.find((t) => t.id === state.activeTreeId);
   state.activeSchemaId = tree ? tree.schema_id : null;
@@ -77,7 +72,6 @@ async function selectTree(treeId) {
   renderAll();
 }
 
-// ---------- Рендер: navbar ----------
 function renderTreeSelect() {
   const sel = $('#tree-select');
   sel.innerHTML = '';
@@ -102,7 +96,6 @@ function renderTreeSelect() {
   $('#delete-tree-btn').style.display = tree ? '' : 'none';
 }
 
-// ---------- Рендер: левая панель (схема полей) ----------
 function renderFields() {
   const info = $('#schema-info');
   const list = $('#fields-list');
@@ -152,7 +145,6 @@ function renderFields() {
   });
 }
 
-// drag-and-drop для переупорядочивания полей
 let dragSrcId = null;
 function addDragHandlers(li) {
   li.addEventListener('dragstart', (e) => {
@@ -185,7 +177,6 @@ async function reorderFields(srcId, targetId) {
   ids.splice(to, 0, ids.splice(from, 1)[0]);
 
   try {
-    // переназначаем position по новому порядку
     await Promise.all(
       ids.map((id, idx) => api('PUT', `/schema-fields/${id}`, { position: idx }))
     );
@@ -196,7 +187,6 @@ async function reorderFields(srcId, targetId) {
   }
 }
 
-// ---------- Inline-форма поля ----------
 function openFieldForm(field) {
   const form = $('#field-form');
   form.classList.remove('hidden');
@@ -232,9 +222,9 @@ async function submitFieldForm(e) {
   const key = $('#field-key').value.trim();
   const payload = {
     key,
-    label: key,        // метка совпадает с ключом
+    label: key,
     field_type: type,
-    required: false,   // все поля необязательные
+    required: false,
     options,
   };
 
@@ -247,7 +237,7 @@ async function submitFieldForm(e) {
     closeFieldForm();
     await loadFields();
     renderFields();
-    renderDiagram();   // узлы показывают поля схемы
+    renderDiagram();
     if (state.selectedNodeId) renderNodeEditor();
     toast('Поле сохранено');
   } catch (err) {
@@ -268,7 +258,6 @@ async function deleteField(field) {
   }
 }
 
-// ---------- Рендер: диаграмма ----------
 function buildTree(nodes) {
   const byId = new Map();
   nodes.forEach((n) => byId.set(n.id, { ...n, children: [] }));
@@ -288,7 +277,6 @@ function buildTree(nodes) {
   return roots;
 }
 
-// какие поля показывать на карточке узла (приоритет name, затем по порядку)
 function previewFields() {
   const fields = [...state.fields];
   fields.sort((a, b) => {
@@ -364,7 +352,6 @@ function renderDiagram() {
   inner.innerHTML = renderTreeHtml(roots);
   container.appendChild(inner);
 
-  // кнопка "добавить корень" снизу
   const addRoot = document.createElement('div');
   addRoot.style.textAlign = 'center';
   addRoot.style.marginTop = '24px';
@@ -375,7 +362,6 @@ function renderDiagram() {
   addRoot.appendChild(btn);
   inner.appendChild(addRoot);
 
-  // обработчики
   container.querySelectorAll('.node-box').forEach((box) => {
     box.addEventListener('click', (e) => {
       if (e.target.classList.contains('node-add-child')) return;
@@ -390,7 +376,6 @@ function renderDiagram() {
   });
 }
 
-// ---------- Узлы ----------
 function selectNode(id) {
   state.selectedNodeId = id;
   renderDiagram();
@@ -399,7 +384,6 @@ function selectNode(id) {
 
 async function createNode(parentId) {
   if (!state.activeTreeId) return;
-  // создаём с пустыми/дефолтными данными
   const data = {};
   try {
     const node = await api('POST', '/nodes', {
@@ -464,7 +448,6 @@ function renderNodeEditor() {
     inputs[f.key] = { input, field: f };
   });
 
-  // кнопки
   const actions = document.createElement('div');
   actions.className = 'editor-actions';
 
@@ -491,7 +474,6 @@ function renderNodeEditor() {
 
 async function saveNode(node, inputs) {
   const data = { ...node.data };
-  // проверка required
   for (const key in inputs) {
     const { input, field } = inputs[key];
     const v = input.value;
@@ -526,7 +508,6 @@ async function deleteNode(node) {
   }
 }
 
-// ---------- Деревья: модалка ----------
 function openTreeModal() {
   const sel = $('#tree-schema-select');
   sel.innerHTML = '';
@@ -597,7 +578,40 @@ async function deleteCurrentTree() {
   }
 }
 
-// ---------- Общий рендер ----------
+async function exportDb() {
+  const btn = $('#export-db-btn');
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⬇ Готовлю...';
+  try {
+    const res = await fetch('/api/export');
+    if (!res.ok) {
+      let msg = `Ошибка ${res.status}`;
+      try { const j = await res.json(); if (j && j.error) msg = j.error; } catch (_) {}
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const disp = res.headers.get('Content-Disposition') || '';
+    const m = disp.match(/filename="([^"]+)"/);
+    const filename = m ? m[1] : 'treebuilder_dump.sql';
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast('Дамп БД скачан');
+  } catch (err) {
+    handleError(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
 function renderAll() {
   renderTreeSelect();
   renderFields();
@@ -613,7 +627,6 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-// ---------- Инициализация ----------
 function bindEvents() {
   $('#tree-select').addEventListener('change', (e) => {
     const id = Number(e.target.value);
@@ -621,6 +634,7 @@ function bindEvents() {
   });
   $('#new-tree-btn').addEventListener('click', openTreeModal);
   $('#delete-tree-btn').addEventListener('click', deleteCurrentTree);
+  $('#export-db-btn').addEventListener('click', exportDb);
   $('#tree-modal-cancel').addEventListener('click', closeTreeModal);
   $('#tree-form').addEventListener('submit', submitTreeForm);
 
@@ -629,7 +643,6 @@ function bindEvents() {
   $('#field-form').addEventListener('submit', submitFieldForm);
   $('#field-type').addEventListener('change', toggleOptionsField);
 
-  // закрытие модалки по клику на фон
   $('#tree-modal').addEventListener('click', (e) => {
     if (e.target.id === 'tree-modal') closeTreeModal();
   });

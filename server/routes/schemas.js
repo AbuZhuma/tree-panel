@@ -3,20 +3,15 @@ const db = require('../db');
 
 const router = express.Router();
 
-// Обёртка для async-обработчиков, чтобы ошибки уходили в next()
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 const FIELD_TYPES = ['text', 'number', 'date', 'select'];
 
-// --- Схемы ---
-
-// GET /api/schemas — список схем
 router.get('/schemas', wrap(async (req, res) => {
   const { rows } = await db.query('SELECT * FROM schemas ORDER BY id');
   res.json(rows);
 }));
 
-// POST /api/schemas — создать схему
 router.post('/schemas', wrap(async (req, res) => {
   const { name } = req.body;
   if (!name || !String(name).trim()) {
@@ -29,16 +24,12 @@ router.post('/schemas', wrap(async (req, res) => {
   res.status(201).json(rows[0]);
 }));
 
-// DELETE /api/schemas/:id — удалить схему
 router.delete('/schemas/:id', wrap(async (req, res) => {
   const { rowCount } = await db.query('DELETE FROM schemas WHERE id = $1', [req.params.id]);
   if (rowCount === 0) return res.status(404).json({ error: 'Схема не найдена' });
   res.json({ ok: true });
 }));
 
-// --- Поля схемы ---
-
-// GET /api/schemas/:id/fields — поля схемы
 router.get('/schemas/:id/fields', wrap(async (req, res) => {
   const { rows } = await db.query(
     'SELECT * FROM schema_fields WHERE schema_id = $1 ORDER BY position, id',
@@ -47,7 +38,6 @@ router.get('/schemas/:id/fields', wrap(async (req, res) => {
   res.json(rows);
 }));
 
-// POST /api/schemas/:id/fields — добавить поле
 router.post('/schemas/:id/fields', wrap(async (req, res) => {
   const schemaId = req.params.id;
   const { key, label, field_type = 'text', required = false, options = null } = req.body;
@@ -62,7 +52,6 @@ router.post('/schemas/:id/fields', wrap(async (req, res) => {
     return res.status(400).json({ error: `Недопустимый field_type. Доступно: ${FIELD_TYPES.join(', ')}` });
   }
 
-  // позиция = в конец списка
   const posRes = await db.query(
     'SELECT COALESCE(MAX(position), -1) + 1 AS next FROM schema_fields WHERE schema_id = $1',
     [schemaId]
@@ -85,7 +74,6 @@ router.post('/schemas/:id/fields', wrap(async (req, res) => {
   res.status(201).json(rows[0]);
 }));
 
-// PUT /api/schema-fields/:id — обновить поле
 router.put('/schema-fields/:id', wrap(async (req, res) => {
   const { key, label, field_type, required, options, position } = req.body;
 
@@ -93,7 +81,6 @@ router.put('/schema-fields/:id', wrap(async (req, res) => {
     return res.status(400).json({ error: `Недопустимый field_type. Доступно: ${FIELD_TYPES.join(', ')}` });
   }
 
-  // Собираем только переданные поля
   const sets = [];
   const vals = [];
   let i = 1;
@@ -122,7 +109,6 @@ router.put('/schema-fields/:id', wrap(async (req, res) => {
   res.json(rows[0]);
 }));
 
-// DELETE /api/schema-fields/:id — удалить поле
 router.delete('/schema-fields/:id', wrap(async (req, res) => {
   const { rowCount } = await db.query('DELETE FROM schema_fields WHERE id = $1', [req.params.id]);
   if (rowCount === 0) return res.status(404).json({ error: 'Поле не найдено' });

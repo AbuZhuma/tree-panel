@@ -1,5 +1,3 @@
--- 001_init.sql — начальная схема БД Tree Builder Panel
-
 CREATE TABLE IF NOT EXISTS schemas (
   id         SERIAL PRIMARY KEY,
   name       TEXT NOT NULL,
@@ -11,9 +9,9 @@ CREATE TABLE IF NOT EXISTS schema_fields (
   schema_id   INT REFERENCES schemas(id) ON DELETE CASCADE,
   key         TEXT NOT NULL,
   label       TEXT NOT NULL,
-  field_type  TEXT NOT NULL DEFAULT 'text', -- text | number | date | select
+  field_type  TEXT NOT NULL DEFAULT 'text',
   required    BOOLEAN DEFAULT false,
-  options     JSONB,                        -- для select: ["вариант1", "вариант2"]
+  options     JSONB,
   position    INT NOT NULL DEFAULT 0
 );
 
