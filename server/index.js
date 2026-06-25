@@ -9,6 +9,7 @@ const exportRouter = require('./routes/export');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '127.0.0.1';
 
 app.use(express.json());
 
@@ -24,6 +25,6 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Внутренняя ошибка сервера' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Tree Builder Panel запущен на http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Tree Builder Panel запущен на http://${HOST}:${PORT}`);
 });
