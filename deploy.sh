@@ -157,7 +157,7 @@ if [ "${#CERT_DOMAINS[@]}" -gt 0 ]; then
   if ! command -v certbot >/dev/null 2>&1; then
     sudo apt-get install -y certbot python3-certbot-nginx
   fi
-  sudo certbot --nginx "${CERT_DOMAINS[@]}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" --redirect
+  sudo certbot --nginx "${CERT_DOMAINS[@]}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" --redirect --expand
   ok "HTTPS включён для: ${CERT_DOMAINS[*]}"
 fi
 [ "${IP_SITE}" != "${SERVER_IP}" ] && warn "DNS ${DOMAIN_SITE} → '${IP_SITE:-ничего}', нужно ${SERVER_IP} (SSL отложен)"

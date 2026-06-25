@@ -63,7 +63,7 @@ cd binar
 
 Когда DNS пропишется, выполните:
 ```bash
-sudo certbot --nginx -d binar.neo.pw -d app.binar.neo.pw --agree-tos -m ok4ami@gmail.com --redirect
+sudo certbot --nginx -d binar.neo.pw -d app.binar.neo.pw --agree-tos -m ok4ami@gmail.com --redirect --expand
 ```
 Сертификат продлевается автоматически (certbot ставит systemd-таймер).
 
