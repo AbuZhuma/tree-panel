@@ -96,7 +96,7 @@ log "Настройка systemd-сервиса ${APP_NAME}"
 NODE_BIN="$(command -v node)"
 sudo tee "/etc/systemd/system/${APP_NAME}.service" >/dev/null <<EOF
 [Unit]
-Description=Tree Builder Panel (${DOMAIN})
+Description=Tree Builder Panel (${DOMAIN_SITE})
 After=network.target postgresql.service
 
 [Service]
