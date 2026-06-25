@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Деревья — просмотр</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <strong class="brand">🌳 Деревья</strong>
+      <label class="tree-picker">
+        <span>Дерево:</span>
+        <select id="tree-select"></select>
+      </label>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div id="diagram" class="diagram"></div>
+  </main>
+
+  <aside id="detail" class="detail hidden">
+    <button id="detail-close" class="detail-close" title="Закрыть">×</button>
+    <h3 id="detail-title">Узел</h3>
+    <dl id="detail-fields" class="detail-fields"></dl>
+  </aside>
+
+  <script src="app.js"></script>
+</body>
+</html>

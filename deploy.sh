@@ -3,7 +3,8 @@ set -euo pipefail
 
 # ===================== КОНФИГ =====================
 APP_NAME="binar-tree"
-DOMAIN="binar.neo.pw"
+DOMAIN_SITE="binar.neo.pw"        # публичный просмотр деревьев
+DOMAIN_APP="app.binar.neo.pw"     # панель управления
 SERVER_IP="178.105.155.207"
 APP_PORT="3210"
 DB_NAME="treebuilder"
@@ -46,6 +47,7 @@ ENV_FILE="$APP_DIR/.env"
 if [ -f "$ENV_FILE" ]; then
   DB_URL_LINE="$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2-)"
   DB_PASS="$(echo "$DB_URL_LINE" | sed -E 's#.*://[^:]+:([^@]+)@.*#\1#')"
+  grep -q '^PUBLIC_HOST=' "$ENV_FILE" || echo "PUBLIC_HOST=${DOMAIN_SITE}" >> "$ENV_FILE"
   ok ".env уже существует — переиспользую пароль БД"
 else
   DB_PASS="$(openssl rand -hex 16)"
@@ -53,6 +55,7 @@ else
 DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@127.0.0.1:5432/${DB_NAME}
 PORT=${APP_PORT}
 HOST=127.0.0.1
+PUBLIC_HOST=${DOMAIN_SITE}
 EOF
   ok ".env создан (пароль БД сгенерирован автоматически)"
 fi
@@ -115,14 +118,14 @@ sleep 1
 sudo systemctl --no-pager --lines=0 status "${APP_NAME}" || true
 ok "Сервис запущен на 127.0.0.1:${APP_PORT}"
 
-# ---------- 6. nginx (отдельный server-блок) ----------
-log "Настройка nginx для ${DOMAIN}"
-NGINX_CONF="/etc/nginx/sites-available/${DOMAIN}"
+# ---------- 6. nginx (один блок на оба домена) ----------
+log "Настройка nginx для ${DOMAIN_SITE} и ${DOMAIN_APP}"
+NGINX_CONF="/etc/nginx/sites-available/${DOMAIN_SITE}"
 sudo tee "$NGINX_CONF" >/dev/null <<EOF
 server {
     listen 80;
     listen [::]:80;
-    server_name ${DOMAIN};
+    server_name ${DOMAIN_SITE} ${DOMAIN_APP};
 
     client_max_body_size 20m;
 
@@ -136,30 +139,39 @@ server {
     }
 }
 EOF
-sudo ln -sf "$NGINX_CONF" "/etc/nginx/sites-enabled/${DOMAIN}"
+sudo ln -sf "$NGINX_CONF" "/etc/nginx/sites-enabled/${DOMAIN_SITE}"
 sudo nginx -t
 sudo systemctl reload nginx
-ok "nginx настроен (HTTP)"
+ok "nginx настроен (HTTP): ${DOMAIN_SITE} = просмотр, ${DOMAIN_APP} = панель"
 
 # ---------- 7. SSL (если DNS уже указывает на сервер) ----------
 log "Проверка DNS и выпуск SSL-сертификата"
-DOMAIN_IP="$(getent hosts "${DOMAIN}" | awk '{print $1}' | head -1 || true)"
-if [ "${DOMAIN_IP}" = "${SERVER_IP}" ]; then
+IP_SITE="$(getent hosts "${DOMAIN_SITE}" | awk '{print $1}' | head -1 || true)"
+IP_APP="$(getent hosts "${DOMAIN_APP}" | awk '{print $1}' | head -1 || true)"
+
+CERT_DOMAINS=()
+[ "${IP_SITE}" = "${SERVER_IP}" ] && CERT_DOMAINS+=(-d "${DOMAIN_SITE}")
+[ "${IP_APP}" = "${SERVER_IP}" ]  && CERT_DOMAINS+=(-d "${DOMAIN_APP}")
+
+if [ "${#CERT_DOMAINS[@]}" -gt 0 ]; then
   if ! command -v certbot >/dev/null 2>&1; then
     sudo apt-get install -y certbot python3-certbot-nginx
   fi
-  sudo certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" --redirect
-  ok "HTTPS включён: https://${DOMAIN}"
-else
-  warn "DNS для ${DOMAIN} указывает на '${DOMAIN_IP:-ничего}', а нужно ${SERVER_IP}."
-  warn "SSL пропущен. Настройте A-запись, затем выполните:"
-  echo   "    sudo certbot --nginx -d ${DOMAIN} --agree-tos -m ${ADMIN_EMAIL} --redirect"
+  sudo certbot --nginx "${CERT_DOMAINS[@]}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" --redirect
+  ok "HTTPS включён для: ${CERT_DOMAINS[*]}"
+fi
+[ "${IP_SITE}" != "${SERVER_IP}" ] && warn "DNS ${DOMAIN_SITE} → '${IP_SITE:-ничего}', нужно ${SERVER_IP} (SSL отложен)"
+[ "${IP_APP}" != "${SERVER_IP}" ]  && warn "DNS ${DOMAIN_APP} → '${IP_APP:-ничего}', нужно ${SERVER_IP} (SSL отложен)"
+if [ "${IP_SITE}" != "${SERVER_IP}" ] || [ "${IP_APP}" != "${SERVER_IP}" ]; then
+  warn "После настройки DNS выпустите сертификат:"
+  echo   "    sudo certbot --nginx -d ${DOMAIN_SITE} -d ${DOMAIN_APP} --agree-tos -m ${ADMIN_EMAIL} --redirect"
 fi
 
 # ---------- Итог ----------
 log "Готово"
-echo "  Приложение:  http://127.0.0.1:${APP_PORT} (внутренний)"
-echo "  Сайт:        http://${DOMAIN}  (после настройки DNS — https)"
+echo "  Просмотр:    http://${DOMAIN_SITE}   (публичная страница дерева)"
+echo "  Панель:      http://${DOMAIN_APP}    (управление)"
+echo "  Внутренний:  127.0.0.1:${APP_PORT}"
 echo "  Сервис:      sudo systemctl status ${APP_NAME}"
 echo "  Логи:        sudo journalctl -u ${APP_NAME} -f"
 echo "  База:        ${DB_NAME} (роль ${DB_USER}, пароль в ${ENV_FILE})"
